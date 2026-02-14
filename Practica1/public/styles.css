@@ -1,0 +1,112 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #2c3e50;
+    color: white;
+    text-align: center;
+}
+
+.boards-container {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    margin-top: 20px;
+}
+
+/* El contenedor de la cuadrícula 10x10 */
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, 30px); /* 10 columnas de 30px */
+    grid-template-rows: repeat(10, 30px);    /* 10 filas de 30px */
+    gap: 2px;
+    background-color: #34495e;
+    padding: 5px;
+    border: 2px solid #ecf0f1;
+}
+
+/* Cada celda individual */
+.cell {
+    width: 30px;
+    height: 30px;
+    background-color: #3498db; /* Color agua */
+    border: 1px solid #2980b9;
+}
+
+/* Efectos visuales */
+.clickable .cell:hover {
+    background-color: #5dade2;
+    cursor: crosshair;
+}
+
+/* Clases para marcar disparos (usaremos esto con JS después) */
+.cell.hit {
+    background-color: #e74c3c !important; /* Rojo = Tocado */
+}
+
+.cell.miss {
+    background-color: #95a5a6 !important; /* Gris = Agua */
+}
+
+.cell.ship {
+    background-color: #f1c40f; /* Amarillo = Barco (Solo visible en tu tablero) */
+}
+
+/* Consola de logs */
+.log-console {
+    margin-top: 30px;
+    background: #000;
+    color: #0f0;
+    font-family: monospace;
+    padding: 10px;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    height: 100px;
+    overflow-y: scroll;
+    text-align: left;
+}
+
+.control-panel {
+    background-color: #34495e;
+    padding: 15px;
+    margin: 10px auto;
+    width: 60%;
+    border-radius: 8px;
+}
+
+.cell.my-ship {
+    background-color: #2ecc71 !important; /* Verde para tus barcos */
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #e67e22;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+}
+
+.cell.my-ship.hit {
+    background-color: #e74c3c !important; /* Rojo intenso */
+    border: 1px solid #c0392b;
+}
+
+/* Estilo para el mensaje de Game Over */
+.game-over-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 40px;
+    border: 2px solid #f1c40f;
+    border-radius: 10px;
+    font-size: 24px;
+    z-index: 1000;
+}
