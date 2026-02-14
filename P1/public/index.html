@@ -3,24 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Batalla Naval - Sistemas Distribuidos</title>
+    <title>Práctica 1: Multiprocesamiento</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <div class="main-container">
         <h1>Batalla Naval</h1>
-
+        
         <div id="setup-panel" class="control-panel">
-            <h3>Fase de Preparación: Coloca tus barcos</h3>
+            <h3>Fase de Preparación</h3>
             <p>Barcos restantes: <span id="ships-left">6</span></p>
-            
             <div class="controls">
-                <button id="rotate-btn">Rotar Barco (Horizontal)</button>
-                <p>Siguiente barco: Tamaño <span id="current-ship-size">3</span></p>
+                <button id="rotate-btn">Rotar (Horizontal)</button>
+                <p>Tamaño actual: <span id="current-ship-size">3</span></p>
             </div>
-            
-            <button id="start-game-btn" disabled>INICIAR JUEGO</button>
+            <button id="start-game-btn" disabled>INICIAR PARTIDA</button>
         </div>
 
         <div class="boards-container">
@@ -28,7 +25,6 @@
                 <h2>Tu Flota</h2>
                 <div id="player-board" class="board"></div>
             </div>
-
             <div class="board-section">
                 <h2>Radar Enemigo</h2>
                 <div id="enemy-board" class="board clickable"></div>
@@ -36,12 +32,11 @@
         </div>
         
         <div class="log-console">
-            <h3>Registro de Acciones:</h3>
+            <h3>Bitácora de Procesos:</h3>
             <ul id="game-logs"></ul>
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="client.js"></script>
+    <script src="ui_logic.js"></script>
 </body>
 </html>
