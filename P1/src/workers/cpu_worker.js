@@ -63,6 +63,7 @@ parentPort.on('message', (msg) => {
     if (msg.type === 'START_GAME') {
         placeRandomShips();
         shotsFiredByBot.clear();
+        console.log('[CPU-WORKER] Tablero virtual generado. IA lista.');
         parentPort.postMessage({ type: 'GAME_STARTED' });
     }
 
@@ -70,6 +71,8 @@ parentPort.on('message', (msg) => {
     else if (msg.type === 'PROCESS_TURN') {
         const playerX = msg.x;
         const playerY = msg.y;
+
+        console.log(`[CPU-WORKER] Analizando impacto en (${playerX}, ${playerY})...`);
 
         // Verificar disparo del jugador
         const hitIndex = botShips.findIndex(s => s.x === playerX && s.y === playerY);
