@@ -111,6 +111,16 @@ body {
     background-color: #2ecc71 !important; /* Verde para tus barcos */
 }
 
+.cell.preview-valid {
+    background-color: #58d68d !important;
+    border-color: #27ae60;
+}
+
+.cell.preview-invalid {
+    background-color: #f1948a !important;
+    border-color: #c0392b;
+}
+
 button {
     padding: 10px 20px;
     background-color: #e67e22;

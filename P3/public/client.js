@@ -10,6 +10,7 @@ const setupPanel = document.getElementById('setup-panel');
 const logContainer = document.querySelector('.log-console');
 const logList = document.getElementById('game-logs');
 const turnDisplay = document.getElementById('turn-display'); 
+const playAgainBtn = document.getElementById('play-again-btn');
 
 // Configuracion del juego
 const fleetToPlace = [3, 2, 2, 1, 1, 1]; 
@@ -19,6 +20,13 @@ let gamePhase = 'MATCHMAKING'; // MATCHMAKING, SETUP, PLAYING, ENDED
 let myShips = []; 
 let myPlayerNumber = 0; 
 let isMyTurn = false; 
+let lastHoveredCell = null;
+
+function showPlayAgainButton() {
+    if (playAgainBtn) {
+        playAgainBtn.style.display = 'inline-block';
+    }
+}
 
 // Inicializar tableros
 function createBoard(boardElement, isEnemy = false) {
@@ -35,6 +43,8 @@ function createBoard(boardElement, isEnemy = false) {
             cell.addEventListener('click', () => handleAttack(x, y));
         } else {
             cell.addEventListener('click', () => handlePlacement(x, y));
+            cell.addEventListener('mouseenter', () => handlePlacementPreview(x, y));
+            cell.addEventListener('mouseleave', clearPlacementPreview);
         }
 
         boardElement.appendChild(cell);
@@ -80,6 +90,36 @@ if(rotateBtn) {
     rotateBtn.addEventListener('click', () => {
         isHorizontal = !isHorizontal;
         rotateBtn.innerText = isHorizontal ? "Rotar (Horizontal)" : "Rotar (Vertical)";
+        if (lastHoveredCell && gamePhase === 'SETUP') {
+            handlePlacementPreview(lastHoveredCell.x, lastHoveredCell.y);
+        }
+    });
+}
+
+// Funciones de colocación de barcos y previsualización
+function handlePlacementPreview(x, y) {
+    clearPlacementPreview();
+    if (gamePhase !== 'SETUP') return;
+    if (currentShipIndex >= fleetToPlace.length) return;
+
+    lastHoveredCell = { x, y };
+    const size = fleetToPlace[currentShipIndex];
+    const canPlace = canPlaceShip(x, y, size, isHorizontal);
+
+    for (let i = 0; i < size; i++) {
+        const px = isHorizontal ? x + i : x;
+        const py = isHorizontal ? y : y + i;
+        if (px >= 10 || py >= 10) continue;
+        const cell = document.getElementById(`player-cell-${px}-${py}`);
+        if (!cell) continue;
+        cell.classList.add(canPlace ? 'preview-valid' : 'preview-invalid');
+    }
+}
+
+function clearPlacementPreview() {
+    const previewCells = playerBoard.querySelectorAll('.preview-valid, .preview-invalid');
+    previewCells.forEach((cell) => {
+        cell.classList.remove('preview-valid', 'preview-invalid');
     });
 }
 
@@ -91,6 +131,7 @@ function handlePlacement(x, y) {
 
     if (canPlaceShip(x, y, size, isHorizontal)) {
         placeShip(x, y, size, isHorizontal);
+        clearPlacementPreview();
         currentShipIndex++;
 
         const remaining = fleetToPlace.length - currentShipIndex;
@@ -221,6 +262,8 @@ socket.on('receive-shot', (data) => {
 // Fin del juego y desconexiones
 socket.on('game-over', (data) => {
     gamePhase = 'ENDED';
+    isMyTurn = false;
+    enemyBoard.classList.remove('my-turn');
     
     if (turnDisplay) {
         if (data.winner === myPlayerNumber) {
@@ -233,18 +276,35 @@ socket.on('game-over', (data) => {
             logMessage("Tus barcos han sido hundidos.");
         }
     }
+
+    showPlayAgainButton();
 });
 
 socket.on('opponent-disconnected', () => {
     if (gamePhase !== 'ENDED') {
         gamePhase = 'ENDED';
+        isMyTurn = false;
+        enemyBoard.classList.remove('my-turn');
         if(turnDisplay) {
             turnDisplay.innerText = "El oponente se desconectó. ¡GANASTE!";
             turnDisplay.style.color = "#9b59b6"; // Morado
         }
         logMessage("El servidor cerró la sala por abandono.");
+        showPlayAgainButton();
     }
 });
+
+socket.on('disconnect', () => {
+    if (gamePhase === 'ENDED') {
+        showPlayAgainButton();
+    }
+});
+
+if (playAgainBtn) {
+    playAgainBtn.addEventListener('click', () => {
+        window.location.reload();
+    });
+}
 
 function logMessage(msg) {
     if (!logList) return;

@@ -12,15 +12,37 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Cola de espera para matchmaking
 let waitingQueue = []; 
 
+// Máximo de salas activas simultáneamente
+const MAX_ACTIVE_ROOMS = 1;
+
 // Objeto para gestionar las salas activas y sus estados
 let activeRooms = {};
 // Contador para asignar IDs únicos a las salas
 let roomCounter = 0;
 
+function getActiveRoomCount() {
+    return Object.keys(activeRooms).length;
+}
+
+function disconnectRoomPlayers(roomId) {
+    const room = activeRooms[roomId];
+    if (!room) return;
+
+    const playerIds = Object.keys(room.players);
+    setTimeout(() => {
+        playerIds.forEach((playerId) => {
+            const playerSocket = io.sockets.sockets.get(playerId);
+            if (playerSocket) {
+                playerSocket.disconnect(true);
+            }
+        });
+    }, 300);
+}
+
 // Función de matchmaking simple
 function tryMatchmaking() {
     // Si hay 2 o más jugadores en la cola, creamos una sala
-    while (waitingQueue.length >= 2) {
+    while (waitingQueue.length >= 2 && getActiveRoomCount() < MAX_ACTIVE_ROOMS) {
         const player1Id = waitingQueue.shift();
         const player2Id = waitingQueue.shift();
         
@@ -58,6 +80,10 @@ function tryMatchmaking() {
             // Emitimos SOLO A ESTA SALA que pueden empezar a colocar barcos
             io.to(roomId).emit('start-setup', '¡Oponente encontrado! Coloquen su flota.');
         }
+    }
+
+    if (waitingQueue.length >= 2 && getActiveRoomCount() >= MAX_ACTIVE_ROOMS) {
+        console.log(`[LOBBY] Límite de salas alcanzado (${MAX_ACTIVE_ROOMS}). Jugadores en espera: ${waitingQueue.length}`);
     }
 }
 
@@ -111,7 +137,7 @@ io.on('connection', (socket) => {
         // Validación de concurrencia
         if (room.isLocked) {
             console.log(`[${roomId}] COLISIÓN EVITADA: Paquete descartado, el servidor está calculando un impacto previo.`);
-            return; // Bloqueamos la condición de carrera (Race Condition)
+            return;
         }
 
         // Adquirimos el Lock (Semáforo en ROJO)
@@ -138,7 +164,12 @@ io.on('connection', (socket) => {
         if (opponent.health <= 0) {
             console.log(`[${roomId}] FIN DEL JUEGO. Ganador: Jugador ${shooter.number}`);
             io.to(roomId).emit('game-over', { winner: shooter.number });
+
+            disconnectRoomPlayers(roomId);
             delete activeRooms[roomId]; // Destruimos la sala para liberar memoria
+
+            // Si quedaron jugadores esperando, intentamos crear nuevas salas
+            tryMatchmaking();
             return; 
         }
 
@@ -167,6 +198,9 @@ io.on('connection', (socket) => {
             
             // Destruimos la sala para liberar memoria
             delete activeRooms[roomId];
+
+            // Al liberar una sala, intentamos emparejar de nuevo
+            tryMatchmaking();
         }
     });
 });
@@ -174,8 +208,7 @@ io.on('connection', (socket) => {
 const PORT = 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`=================================================`);
-    console.log(`🚀 SERVIDOR MULTIPLAYER MASSIVO EJECUTÁNDOSE 🚀`);
+    console.log(`Servidor de Batalla Naval`);
     console.log(`Escuchando en el puerto ${PORT}`);
-    console.log(`Mecanismo Anti-Colisión (Semáforo) ACTIVO`);
     console.log(`=================================================\n`);
 });
