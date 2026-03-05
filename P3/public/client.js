@@ -314,6 +314,6 @@ function logMessage(msg) {
     if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
 }
 
-// Inicializamos creando la cuadrícula HTML
+// Inicializar
 createBoard(playerBoard, false);
 createBoard(enemyBoard, true);
