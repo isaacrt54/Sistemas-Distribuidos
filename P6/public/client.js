@@ -144,7 +144,7 @@ async function pollGameState() {
             }
 
         } else if (state.phase === 'ENDED') {
-            handleGameOver(state.winner);
+            handleGameOver(state.winner, state.disconnectReason);
         }
 
     } catch (error) {
@@ -215,16 +215,22 @@ async function handleAttack(x, y) {
 
 // --- 6. FIN DEL JUEGO Y UTILIDADES ---
 
-function handleGameOver(winnerNumber) {
+function handleGameOver(winnerNumber, disconnectReason = null) {
     gamePhase = 'ENDED';
     isMyTurn = false;
-    clearInterval(gamePollInterval); // Apagamos el Polling para no saturar la red
+    clearInterval(gamePollInterval); // Apagamos el Polling 
     enemyBoard.classList.remove('my-turn');
 
     if (turnDisplay) {
         if (winnerNumber === myPlayerNumber) {
-            turnDisplay.innerText = "¡VICTORIA ROYALE!";
-            turnDisplay.style.color = "#f1c40f"; 
+            if (disconnectReason === "abandono") {
+                turnDisplay.innerText = "El oponente huyó. ¡GANASTE!";
+                turnDisplay.style.color = "#9b59b6"; // Morado para abandono
+                logMessage("El servidor cerró la sala por abandono (Timeout).");
+            } else {
+                turnDisplay.innerText = "¡VICTORIA ROYALE!";
+                turnDisplay.style.color = "#f1c40f"; 
+            }
         } else {
             turnDisplay.innerText = "DERROTA TOTAL.";
             turnDisplay.style.color = "#c0392b"; 

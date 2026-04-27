@@ -70,14 +70,16 @@ app.get('/api/game/:roomId/state/:playerNumber', (req, res) => {
         return res.status(404).json({ error: "La sala aún no existe o ya fue destruida" });
     }
 
+    room.players[playerNumber].lastSeen = Date.now();
+
     const bothReady = room.players[1].ready && room.players[2].ready;
     
-    // Devolvemos la radiografía exacta del juego en este milisegundo
     res.json({
         phase: bothReady ? (room.winner ? 'ENDED' : 'PLAYING') : 'SETUP',
         turn: room.turn,
         winner: room.winner,
-        lastShot: room.lastShot 
+        lastShot: room.lastShot,
+        disconnectReason: room.disconnectReason
     });
 });
 
@@ -123,6 +125,40 @@ app.post('/api/game/:roomId/shoot', (req, res) => {
     res.json({ result, x, y, isWinner: room.winner === playerNumber });
 });
 
+// Se ejecuta cada 3 segundos para limpiar jugadores desconectados
+setInterval(() => {
+    const now = Date.now();
+    
+    for (const roomId in activeRooms) {
+        const room = activeRooms[roomId];
+        
+        // Si ya hay ganador, ignoramos esta sala
+        if (room.winner) continue; 
+
+        // Verificamos a los dos jugadores
+        for (let p of [1, 2]) {
+            const player = room.players[p];
+            
+            // Si el jugador ya se había registrado, pero lleva más de 5 segundos sin hacer Polling
+            if (player && player.lastSeen && (now - player.lastSeen > 5000)) {
+                
+                const opponentNum = p === 1 ? 2 : 1;
+                room.winner = opponentNum;
+                room.disconnectReason = "abandono";
+                
+                console.log(`[${roomId}] Timeout detectado. Jugador ${p} abandonó la partida. Ganador: Jugador ${opponentNum}`);
+                
+                // Destruimos la sala después de un rato para que el ganador alcance a leer su victoria
+                setTimeout(() => {
+                    delete activeRooms[roomId];
+                    updateMasterLoad();
+                }, 10000);
+                
+                break; // Salimos del ciclo de jugadores porque la sala ya terminó
+            }
+        }
+    }
+}, 3000);
 
 app.listen(PORT, '0.0.0.0', async () => {
     console.log(`=========================================`);
