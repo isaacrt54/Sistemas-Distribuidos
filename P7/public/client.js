@@ -10,6 +10,19 @@ let isMyTurn = false;
 let lobbyPollInterval = null;
 let gamePollInterval = null;
 
+// Registro del Service Worker para convertir esta app en PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('[PWA] Service Worker registrado con éxito. Scope:', registration.scope);
+            })
+            .catch((error) => {
+                console.log('[PWA] Fallo al registrar el Service Worker:', error);
+            });
+    });
+}
+
 // Elementos del DOM
 const playerBoard = document.getElementById('player-board');
 const enemyBoard = document.getElementById('enemy-board');
@@ -69,7 +82,7 @@ async function pollMasterStatus() {
             // Pasamos a la fase de preparación
             startSetupPhase();
         } else {
-            if(turnDisplay) turnDisplay.innerText = "Buscando oponente (Haciendo Polling)...";
+            if(turnDisplay) turnDisplay.innerText = "Buscando oponente...";
         }
     } catch (error) {
         console.error("Fallo al hacer polling al Maestro", error);
@@ -330,3 +343,50 @@ if(rotateBtn) {
 createBoard(playerBoard, false);
 createBoard(enemyBoard, true);
 joinLobby();
+
+// Manejo de desconexiones: Si el cliente pierde conexión, le damos 60 segundos para reconectar antes de abandonar la partida automáticamente
+let offlineCountdownInterval = null;
+let secondsLeft = 60;
+
+window.addEventListener('offline', () => {
+    logMessage("⚠️ Alerta: Conexión a internet perdida.");
+    secondsLeft = 60; // Reiniciamos el contador
+    
+    // Mostramos el tiempo restante en pantalla
+    if(turnDisplay) {
+        turnDisplay.innerText = `Sin conexión. Tienes ${secondsLeft}s para reconectar...`;
+        turnDisplay.style.color = "#e67e22"; 
+    }
+
+    // Iniciamos la cuenta regresiva local
+    offlineCountdownInterval = setInterval(() => {
+        secondsLeft--;
+        if(secondsLeft > 0) {
+            if(turnDisplay) turnDisplay.innerText = `Sin conexión. Tienes ${secondsLeft}s para reconectar...`;
+        } else {
+            clearInterval(offlineCountdownInterval);
+            if(turnDisplay) {
+                turnDisplay.innerText = "Tiempo agotado. Has abandonado la partida.";
+                turnDisplay.style.color = "#c0392b";
+            }
+            logMessage("Desconexión fatal. El servidor te ha dado por perdedor.");
+            gamePhase = 'ENDED'; // Bloqueamos el juego localmente
+        }
+    }, 1000);
+});
+
+window.addEventListener('online', () => {
+    // Si recupera la red, detenemos la cuenta regresiva
+    if (offlineCountdownInterval) {
+        clearInterval(offlineCountdownInterval);
+    }
+    
+    // Si logró reconectarse antes de llegar a 0
+    if (secondsLeft > 0 && gamePhase !== 'ENDED') {
+        logMessage("🌐 Conexión restaurada dentro del límite. Sincronizando...");
+        if(turnDisplay) {
+            turnDisplay.innerText = "Reconectado. Actualizando estado...";
+            turnDisplay.style.color = "#3498db"; 
+        }
+    }
+});
