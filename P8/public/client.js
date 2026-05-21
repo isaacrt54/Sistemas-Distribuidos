@@ -1,5 +1,5 @@
 const MASTER_URL = `http://${window.location.hostname}:3000`;
-const API_BASE = ''; // Ya no necesitamos URLs completas, usaremos rutas relativas
+const API_BASE = '';
 
 let myPlayerId = null;
 let myPlayerNumber = null;
@@ -65,7 +65,7 @@ async function joinLobby() {
 // Polling al Maestro para verificar si ya tenemos un oponente asignado
 async function pollMasterStatus() {
     try {
-        const response = await fetch(`/api/lobby/status/${myPlayerId}`); // <- Ruta relativa
+        const response = await fetch(`/api/lobby/status/${myPlayerId}`);
         const data = await response.json();
 
         if (data.status === 'matched') {
@@ -73,7 +73,6 @@ async function pollMasterStatus() {
             
             myRoomId = data.roomId;
             myPlayerNumber = data.playerNumber;
-            // ¡ELIMINADA LA LÍNEA QUE ASIGNABA GAME_URL!
             
             logMessage(`¡Partida encontrada! Sala: ${myRoomId}`);
             logMessage(`Eres el Jugador ${myPlayerNumber}.`);
@@ -409,7 +408,7 @@ window.addEventListener('online', () => {
     
     // Si logró reconectarse antes de llegar a 0
     if (secondsLeft > 0 && gamePhase !== 'ENDED') {
-        logMessage("🌐 Conexión restaurada dentro del límite. Sincronizando...");
+        logMessage("Conexión restaurada dentro del límite. Sincronizando...");
         if(turnDisplay) {
             turnDisplay.innerText = "Reconectado. Actualizando estado...";
             turnDisplay.style.color = "#3498db"; 

@@ -8,11 +8,10 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-// --- BASE DE DATOS LOCAL DEL MICROSERVICIO ---
 let waitingQueue = []; 
 let playersStatus = {}; 
 
-// Lógica pura de emparejamiento
+// Función de Emparejamiento
 function matchmake() {
     while (waitingQueue.length >= 2) {
         const player1Id = waitingQueue.shift();
@@ -22,16 +21,10 @@ function matchmake() {
 
         console.log(`[MATCHMAKER] Emparejamiento exitoso -> Sala: ${newRoomId}`);
 
-        // Ya no enviamos "puertos", solo el ID de la sala
         playersStatus[player1Id] = { status: 'matched', roomId: newRoomId, playerNumber: 1 };
         playersStatus[player2Id] = { status: 'matched', roomId: newRoomId, playerNumber: 2 };
     }
 }
-
-// ==========================================
-// RUTAS DEL MICROSERVICIO
-// Nota: El Gateway nos manda la ruta completa que inicia con /api/lobby
-// ==========================================
 
 app.post('/join', (req, res) => {
     const playerId = uuidv4();

@@ -2,19 +2,14 @@ const express = require('express');
 const cors = require('cors');
 
 const app = express();
-const PORT = 3002; // El Gateway redirige /api/game a este puerto
+const PORT = 3002;
 
 app.use(cors());
 app.use(express.json());
 
-// --- BASE DE DATOS LOCAL DEL MICROSERVICIO ---
 let activeRooms = {}; 
 
-// ==========================================
-// RUTAS DEL MICROSERVICIO
-// ==========================================
-
-// 1. Fase de Preparación
+// Fase de Preparación
 app.post('/:roomId/setup', (req, res) => {
     const { roomId } = req.params;
     const { playerNumber, ships } = req.body;
@@ -40,14 +35,13 @@ app.post('/:roomId/setup', (req, res) => {
     res.json({ message: "Flota registrada" });
 });
 
-// 2. Consulta de Estado (Polling y Heartbeat)
+// Consulta de Estado
 app.get('/:roomId/state/:playerNumber', (req, res) => {
     const { roomId, playerNumber } = req.params;
     const room = activeRooms[roomId];
 
     if (!room) return res.status(404).json({ error: "Sala inexistente" });
 
-    // Registramos latido de vida (Tolerancia a fallos PWA)
     if (room.players[playerNumber]) {
         room.players[playerNumber].lastSeen = Date.now();
     }
@@ -63,7 +57,7 @@ app.get('/:roomId/state/:playerNumber', (req, res) => {
     });
 });
 
-// 3. Disparar
+// Disparar
 app.post('/:roomId/shoot', (req, res) => {
     const { roomId } = req.params;
     const { playerNumber, x, y } = req.body;
@@ -98,7 +92,7 @@ app.post('/:roomId/shoot', (req, res) => {
     res.json({ result, x, y, isWinner: room.winner === playerNumber });
 });
 
-// --- MOTOR DE DETECCIÓN DE ABANDONO (60s) ---
+// Timeout de Inactividad
 setInterval(() => {
     const now = Date.now();
     for (const roomId in activeRooms) {
