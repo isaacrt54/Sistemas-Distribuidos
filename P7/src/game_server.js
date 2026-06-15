@@ -32,7 +32,6 @@ async function updateMasterLoad() {
     }
 }
 
-// Rutas para el juego de Batalla Naval
 // Fase de Preparación
 app.post('/api/game/:roomId/setup', (req, res) => {
     const { roomId } = req.params;
