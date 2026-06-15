@@ -112,8 +112,8 @@ body {
 }
 
 .cell.preview-valid {
-    background-color: #58d68d !important;
-    border-color: #27ae60;
+    background-color: #bdc3c7 !important; /* Gris para la previsualización */
+    border-color: #95a5a6;
 }
 
 .cell.preview-invalid {

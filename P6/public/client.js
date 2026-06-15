@@ -269,8 +269,34 @@ function createBoard(boardElement, isEnemy = false) {
             cell.addEventListener('click', () => handleAttack(x, y));
         } else {
             cell.addEventListener('click', () => handlePlacement(x, y));
+            cell.addEventListener('mouseover', () => handlePreview(x, y));
+            cell.addEventListener('mouseout', clearPreview);
         }
         boardElement.appendChild(cell);
+    }
+}
+
+function clearPreview() {
+    document.querySelectorAll('.cell.preview-valid, .cell.preview-invalid').forEach(c => {
+        c.classList.remove('preview-valid', 'preview-invalid');
+    });
+}
+
+function handlePreview(x, y) {
+    if (gamePhase !== 'SETUP' || currentShipIndex >= fleetToPlace.length) return;
+    
+    const size = fleetToPlace[currentShipIndex];
+    const isValid = canPlaceShip(x, y, size, isHorizontal);
+    
+    for (let i = 0; i < size; i++) {
+        const px = isHorizontal ? x + i : x;
+        const py = isHorizontal ? y : y + i;
+        if (px < 10 && py < 10) {
+            const cell = document.getElementById(`player-cell-${px}-${py}`);
+            if (cell) {
+                cell.classList.add(isValid ? 'preview-valid' : 'preview-invalid');
+            }
+        }
     }
 }
 
@@ -281,6 +307,7 @@ function handlePlacement(x, y) {
     if (canPlaceShip(x, y, size, isHorizontal)) {
         placeShip(x, y, size, isHorizontal);
         currentShipIndex++;
+        clearPreview(); // Limpiar previsualización después de colocar
 
         const remaining = fleetToPlace.length - currentShipIndex;
         if(document.getElementById('ships-left')) document.getElementById('ships-left').innerText = remaining;
@@ -323,6 +350,7 @@ if(rotateBtn) {
     rotateBtn.addEventListener('click', () => {
         isHorizontal = !isHorizontal;
         rotateBtn.innerText = isHorizontal ? "Rotar (Horizontal)" : "Rotar (Vertical)";
+        clearPreview(); // Limpiamos preview anterior al rotar
     });
 }
 
